@@ -36,34 +36,34 @@ function checkOS() {
         exit 1
       fi
     elif [[ $ID == "ubuntu" ]]; then
-  OS="ubuntu"
-  MAJOR_UBUNTU_VERSION=$(echo "$VERSION_ID" | cut -d '.' -f1)
-  if [[ $MAJOR_UBUNTU_VERSION -lt 18 ]]; then
-    echo "Your Ubuntu version is unsupported."
-    echo ""
-    echo "Script supports only Ubuntu >=18"
-    echo ""
-    exit 1
-  fi
-fi
+      OS="ubuntu"
+      MAJOR_UBUNTU_VERSION=$(echo "$VERSION_ID" | cut -d '.' -f1)
+      if [[ $MAJOR_UBUNTU_VERSION -lt 18 ]]; then
+        echo "Your Ubuntu version is unsupported."
+        echo ""
+        echo "Script supports only Ubuntu >=18"
+        echo ""
+        exit 1
+      fi
+    fi
 
-if ! dpkg -s $PKGS >/dev/null 2>&1; then
-  echo "Installing missing packages…"
-  sleep 1
-  apt-get update -y;
+    if ! dpkg -s $PKGS >/dev/null 2>&1; then
+      echo "Installing missing packages…"
+      sleep 1
+      apt-get update -y;
 
-  if [[ $MAJOR_UBUNTU_VERSION == 18 ]]; then
-    apt -y install $PKGS;
-    add-apt-repository ppa:ondrej/php -y;
-    apt-get update -y;
-    apt -y install php7.2 php7.2-cli php7.2-json php7.2-common php7.2-mysql php7.2-zip php7.2-gd php7.2-mbstring php7.2-curl php7.2-xml php7.2-bcmath php7.2-bz2 php7.2-xmlrpc;
-  elif [[ $MAJOR_UBUNTU_VERSION == 20 || $MAJOR_UBUNTU_VERSION == 22 ]]; then
-    apt -y install $PKGS;
-    add-apt-repository ppa:ondrej/php -y;
-    apt-get update -y;
-    apt -y install php7.4 php7.4-cli php7.4-json php7.4-common php7.4-mysql php7.4-zip php7.4-gd php7.4-mbstring php7.4-curl php7.4-xml php7.4-bcmath php7.4-bz2 php7.4-xmlrpc;
-  fi
-fi
+      if [[ $MAJOR_UBUNTU_VERSION == 18 ]]; then
+        apt -y install $PKGS;
+        add-apt-repository ppa:ondrej/php -y;
+        apt-get update -y;
+        apt -y install php7.2 php7.2-cli php7.2-json php7.2-common php7.2-mysql php7.2-zip php7.2-gd php7.2-mbstring php7.2-curl php7.2-xml php7.2-bcmath php7.2-bz2 php7.2-xmlrpc;
+      elif [[ $MAJOR_UBUNTU_VERSION == 20 || $MAJOR_UBUNTU_VERSION == 22 ]]; then
+        apt -y install $PKGS;
+        add-apt-repository ppa:ondrej/php -y;
+        apt-get update -y;
+        apt -y install php7.4 php7.4-cli php7.4-json php7.4-common php7.4-mysql php7.4-zip php7.4-gd php7.4-mbstring php7.4-curl php7.4-xml php7.4-bcmath php7.4-bz2 php7.4-xmlrpc;
+      fi
+    fi
   elif [[ -e /etc/system-release ]]; then
     source /etc/os-release
     if [[ $ID == "fedora" || $ID_LIKE == "fedora" ]]; then
@@ -97,7 +97,7 @@ fi
       yum install http://rpms.remirepo.net/enterprise/remi-release-"$VERSION_ID".rpm -y
       yum-config-manager --enable remi-php74
       yum update -y
-      yum install php php-json php-common php-cli php-gd php-curl php-mysqlnd php-zip php-xml php-mbstring pphp-bcmath -y
+      yum install php php-json php-common php-cli php-gd php-curl php-mysqlnd php-zip php-xml php-mbstring php-bcmath -y
     fi
   else
     echo " Looks like you're launching this installer in other OS than Debian, Ubuntu, Fedora or CentOS."
@@ -198,32 +198,60 @@ function installDRMPHP() {
     read -p "Please create root user MySQL password: " rootpasswd </dev/tty
   fi
   echo "";
-	read -p "Please enter the NAME of the new MySQL database (example: db1): " dbname </dev/tty
-	sed -i "s/drm/$dbname/g" /var/www/html/_db.php
-	read -p "Please enter the MySQL database CHARACTER SET (enter utf8 if you don't know what you are doing): " charset </dev/tty
-	echo "Creating new MySQL database..."
-	mysql -uroot -p${rootpasswd} -e "CREATE DATABASE ${dbname} /*\!40100 DEFAULT CHARACTER SET ${charset} */;"
-	echo "Database successfully created!"
+  read -p "Please enter the NAME of the new MySQL database (example: db1): " dbname </dev/tty
+  sed -i "s/drm/$dbname/g" /var/www/html/_db.php
+  read -p "Please enter the MySQL database CHARACTER SET (enter utf8 if you don't know what you are doing): " charset </dev/tty
+  echo "Creating new MySQL database..."
+  mysql -uroot -p${rootpasswd} -e "CREATE DATABASE ${dbname} /*\!40100 DEFAULT CHARACTER SET ${charset} */;"
+  echo "Database successfully created!"
   read -p  "Please enter the NAME of the new MySQL database user (example: user1): " username </dev/tty
-	sed -i "s/admin/$username/g" /var/www/html/_db.php
-	read -s -p "Please enter the PASSWORD for the new MySQL database user (password will be hidden when typing): " userpass </dev/tty
-	sed -i "s/passwd/$userpass/g" /var/www/html/_db.php
-	echo "Creating new user..."
-	mysql -uroot -p${rootpasswd} -e "CREATE USER ${username}@localhost IDENTIFIED BY '${userpass}';"
-	echo "User successfully created!"
-	echo ""
-	echo "Granting ALL privileges on ${dbname} to ${username}!"
-	mysql -uroot -p${rootpasswd} -e "GRANT ALL PRIVILEGES ON ${dbname}.* TO '${username}'@'localhost';"
-	mysql -uroot -p${rootpasswd} -e "FLUSH PRIVILEGES;"
-	mysql -uroot -p${rootpasswd} ${dbname} < "$dirInstall/db.sql"
-	# MySQL commands
+  sed -i "s/admin/$username/g" /var/www/html/_db.php
+  read -s -p "Please enter the PASSWORD for the new MySQL database user (password will be hidden when typing): " userpass </dev/tty
+  sed -i "s/passwd/$userpass/g" /var/www/html/_db.php
+  echo "Creating new user..."
+  mysql -uroot -p${rootpasswd} -e "CREATE USER ${username}@localhost IDENTIFIED BY '${userpass}';"
+  echo "User successfully created!"
+  echo ""
+  echo "Granting ALL privileges on ${dbname} to ${username}!"
+  mysql -uroot -p${rootpasswd} -e "GRANT ALL PRIVILEGES ON ${dbname}.* TO '${username}'@'localhost';"
+  mysql -uroot -p${rootpasswd} -e "FLUSH PRIVILEGES;"
+  mysql -uroot -p${rootpasswd} ${dbname} < "$dirInstall/db.sql"
+  # MySQL commands
   commands=$(cat <<EOF
     USE $dbname;
     SET GLOBAL sql_mode = 'NO_ENGINE_SUBSTITUTION';
     SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';
 EOF
     )
-	echo "$commands" | mysql -u root -p"$rootpasswd"
+  echo "$commands" | mysql -u root -p"$rootpasswd"
+
+  # Add new tables to the database
+  mysql -uroot -p"$rootpasswd" "$dbname" -e "
+  CREATE TABLE stream_requests (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      stream_id INT NOT NULL,
+      request_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      status ENUM('pending', 'active', 'completed') DEFAULT 'pending'
+  );
+
+  CREATE TABLE active_viewers (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      stream_id INT NOT NULL,
+      user_id INT NOT NULL,
+      last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  );
+  "
+
+  # Copy necessary files to appropriate directories
+  cp "$dirInstall/requestStream.php" /var/www/html/
+  cp "$dirInstall/checkAndStartStream.php" /var/www/html/
+  cp "$dirInstall/checkAndStopStream.php" /var/www/html/
+  cp "$dirInstall/index.html" /var/www/html/
+
+  # Set up cron jobs
+  (crontab -l 2>/dev/null; echo "* * * * * /usr/bin/php /var/www/html/checkAndStartStream.php") | crontab -
+  (crontab -l 2>/dev/null; echo "* * * * * /usr/bin/php /var/www/html/checkAndStopStream.php") | crontab -
 
   # Delete default apache page
   rm /var/www/html/index.html;
